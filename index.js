@@ -1,14 +1,63 @@
 const {ApolloServer} = require('apollo-server')
+
 const typeDefs = `
+  type Photo {
+    id: ID!
+    url: String!
+    name: String!
+    description: String
+  }
+  
+  
+  enum PhotoCategory {
+    SELFIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
+  }
+  
+  input PostPhotoInput {
+    name: String!
+    category: PhotoCategory=PORTRAIT
+    description: String
+  }
+  
   type Query {
     totalPhotos: Int!
+    allPhotos: [Photo!]!
+  }
+  
+  type Mutation {
+    postPhoto(input: PostPhotoInput): Photo!
   }
 `
 
+let _id = 0
+let photos = []
+
 const resolvers = {
   Query: {
-    totalPhotos: () => 42
+    totalPhotos: () => photos.length,
+    allPhotos: () => photos
+  },
+
+  Mutation: {
+    postPhoto(parent, args) {
+      const newPhoto = {
+        id: _id++,
+        ...args.input
+      }
+      photos.push(newPhoto)
+
+      return newPhoto
+    }
+  },
+
+  Photo: {
+    url: parent => `http://hoge.com/img/${parent.id}.jpg`
   }
+
 }
 
 const server = new ApolloServer({
